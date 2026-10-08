@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Revisões</title>
+<style>
+:root {
+  --bg: #F6F7F9; --surface: #FFFFFF; --text: #1B1F24; --muted: #5E6773;
+  --line: #E2E5EA; --primary: #1F4E79; --on-primary: #FFFFFF;
+  --red: #C0392B; --red-bg: #FBEAE8; --amber: #A86500; --amber-bg: #FFF3DC;
+  --green: #1E7F55; --green-bg: #E3F4EC; --blue-bg: #E6EEF7; --gray-bg: #EEF0F3;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14171C; --surface: #1E2228; --text: #E8EAED; --muted: #9AA3AE;
+    --line: #2E343C; --primary: #8AB4E8; --on-primary: #0F1A26;
+    --red: #F28B82; --red-bg: #3A2120; --amber: #F2C26B; --amber-bg: #3A2F18;
+    --green: #81C995; --green-bg: #1D3326; --blue-bg: #1F2D3D; --gray-bg: #2A2F36;
+  }
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; background: var(--bg); color: var(--text);
+  font: 15px/1.4 system-ui, -apple-system, "Roboto", sans-serif; }
+header { position: sticky; top: 0; z-index: 5; background: var(--bg);
+  padding: 14px 16px 8px; border-bottom: 1px solid var(--line); }
+h1 { font-size: 22px; margin: 0 0 2px; font-weight: 650; }
+.sub { color: var(--muted); font-size: 13px; }
+.actions { display: flex; gap: 8px; margin-top: 12px; }
+button { font: inherit; border: 0; border-radius: 10px; padding: 11px 14px;
+  background: var(--gray-bg); color: var(--text); cursor: pointer; }
+button.primary { background: var(--primary); color: var(--on-primary); font-weight: 600; }
+button.danger { background: var(--red-bg); color: var(--red); }
+button.grow { flex: 1; }
+button:active { opacity: .8; }
+.tabs { display: flex; gap: 6px; margin-top: 12px; overflow-x: auto; scrollbar-width: none; }
+.tabs button { padding: 6px 12px; border-radius: 999px; font-size: 13px; white-space: nowrap; }
+.tabs button.on { background: var(--primary); color: var(--on-primary); }
+main { padding: 12px 16px 96px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+  padding: 12px 14px; margin-bottom: 10px; }
+.card .top { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.journal { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .02em; }
+.title { margin: 4px 0 8px; font-weight: 550; }
+.meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--muted); }
+.chip { border-radius: 999px; padding: 2px 9px; font-size: 12px; font-weight: 600; }
+.st-invited { background: var(--blue-bg); color: var(--primary); }
+.st-accepted { background: var(--amber-bg); color: var(--amber); }
+.st-submitted { background: var(--green-bg); color: var(--green); }
+.st-declined { background: var(--gray-bg); color: var(--muted); }
+.due-late { background: var(--red-bg); color: var(--red); }
+.due-soon { background: var(--amber-bg); color: var(--amber); }
+.due-ok { background: var(--gray-bg); color: var(--muted); }
+.empty { text-align: center; color: var(--muted); padding: 48px 12px; }
+.fab { position: fixed; right: 16px; bottom: 20px; width: 56px; height: 56px; border-radius: 16px;
+  font-size: 28px; line-height: 1; background: var(--primary); color: var(--on-primary);
+  box-shadow: 0 4px 14px rgba(0,0,0,.2); }
+.sheet-bg { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 10; display: none; }
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; max-height: 92vh; overflow-y: auto;
+  background: var(--surface); border-radius: 16px 16px 0 0; padding: 16px; z-index: 11; display: none; }
+.sheet.open, .sheet-bg.open { display: block; }
+.sheet h2 { font-size: 18px; margin: 0 0 12px; }
+label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 4px; font-weight: 600; }
+input, select, textarea { width: 100%; font: inherit; color: var(--text); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; }
+textarea { min-height: 120px; resize: vertical; }
+.row { display: flex; gap: 8px; }
+.row > * { flex: 1; }
+.btns { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+.hint { font-size: 13px; color: var(--muted); margin: 6px 0; }
+.toast { position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%); z-index: 20;
+  background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: 14px;
+  opacity: 0; transition: opacity .2s; pointer-events: none; max-width: 90vw; }
+.toast.show { opacity: 1; }
+.steps { margin: 4px 0 0; padding-left: 20px; font-size: 13px; color: var(--muted); }
+.steps li { margin: 3px 0; }
+a.link { color: var(--primary); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Revisões</h1>
+  <div class="sub" id="summary"></div>
+  <div class="actions">
+    <button class="primary grow" id="btnClaude">Buscar e-mails com Claude</button>
+    <button id="btnImport">Importar</button>
+    <button id="btnMenu" aria-label="Mais opções">⋯</button>
+  </div>
+  <div class="tabs" id="tabs"></div>
+</header>
+
+<main id="list"></main>
+<button class="fab" id="btnAdd" aria-label="Adicionar paper">+</button>
+
+<div class="sheet-bg" id="sheetBg"></div>
+
+<!-- Editar / adicionar -->
+<div class="sheet" id="sheetEdit">
+  <h2 id="editTitle">Paper</h2>
+  <label for="fId">ID do manuscrito</label>
+  <input id="fId" autocapitalize="characters">
+  <label for="fJournal">Periódico</label>
+  <input id="fJournal">
+  <label for="fTitle">Título</label>
+  <textarea id="fTitle" style="min-height:64px"></textarea>
+  <div class="row">
+    <div><label for="fStatus">Status</label>
+      <select id="fStatus">
+        <option value="invited">Convidado</option>
+        <option value="accepted">Aceito / revisando</option>
+        <option value="submitted">Revisão enviada</option>
+        <option value="declined">Recusado / cancelado</option>
+      </select></div>
+    <div><label for="fDue">Prazo da revisão</label><input id="fDue" type="date"></div>
+  </div>
+  <div class="row">
+    <div><label for="fInvited">Convite em</label><input id="fInvited" type="date"></div>
+    <div><label for="fRespond">Responder até</label><input id="fRespond" type="date"></div>
+  </div>
+  <label for="fNotes">Minhas notas</label>
+  <textarea id="fNotes" style="min-height:70px"></textarea>
+  <div class="hint" id="fClaudeNotes"></div>
+  <div class="btns">
+    <button class="primary grow" id="btnSave">Salvar</button>
+    <button id="btnEmail">Abrir e-mail</button>
+    <button class="danger" id="btnDelete">Excluir</button>
+  </div>
+</div>
+
+<!-- Importar resposta do Claude -->
+<div class="sheet" id="sheetImport">
+  <h2>Importar resposta do Claude</h2>
+  <ol class="steps">
+    <li>No Claude, copie a resposta (o bloco JSON) ou use Compartilhar → Revisões.</li>
+    <li>Toque em "Colar" e depois em "Importar".</li>
+  </ol>
+  <label for="importText">Resposta</label>
+  <textarea id="importText" placeholder='{"papers":[ ... ]}'></textarea>
+  <div class="btns">
+    <button id="btnPaste">Colar</button>
+    <button class="primary grow" id="btnDoImport">Importar</button>
+  </div>
+</div>
+
+<!-- Menu -->
+<div class="sheet" id="sheetMenu">
+  <h2>Opções</h2>
+  <label for="optDays">Primeira busca: quantos dias para trás</label>
+  <input id="optDays" type="number" min="7" max="730">
+  <div class="hint" id="lastSyncInfo"></div>
+  <div class="btns">
+    <button id="btnCopyPrompt">Copiar prompt</button>
+    <button id="btnResetSync">Buscar tudo de novo</button>
+  </div>
+  <div class="btns">
+    <button id="btnExport">Exportar backup</button>
+    <button id="btnCalendar">Prazos em texto</button>
+  </div>
+  <div class="hint">O backup é um JSON. Para restaurar, cole-o em "Importar".</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+const KEY = 'revisoes.v1';
+const STATUS = {
+  invited: { label: 'Convidado', rank: 0 },
+  accepted: { label: 'Revisando', rank: 1 },
+  submitted: { label: 'Enviada', rank: 2 },
+  declined: { label: 'Recusado', rank: 2 },
+};
+const TABS = [
+  ['active', 'Pendentes'], ['invited', 'Convites'], ['accepted', 'Revisando'],
+  ['submitted', 'Enviadas'], ['declined', 'Recusados'], ['all', 'Todos'],
+];
+const SENDERS = ['onbehalfof@manuscriptcentral.com', 'em@editorialmanager.com'];
+const hasBridge = typeof window.Android !== 'undefined';
+const $ = id => document.getElementById(id);
+
+// ---------- estado ----------
+let db = load();
+let tab = 'active';
+let editingId = null;
+
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem(KEY));
+    if (d && Array.isArray(d.papers)) return Object.assign({ lastSync: null, days: 180 }, d);
+  } catch (e) {}
+  return { papers: [], lastSync: null, days: 180 };
+}
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) { toast('Erro ao salvar'); }
+}
+function normId(s) { return String(s || '').trim().toUpperCase().replace(/\s+/g, ''); }
+function todayISO() { return new Date().toISOString().slice(0, 10); }
+function isDate(s) { return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s); }
+
+// ---------- prompt para o Claude ----------
+function sinceDate() {
+  const d = new Date();
+  if (db.lastSync) {
+    const last = new Date(db.lastSync);
+    last.setDate(last.getDate() - 3); // margem para lembretes atrasados
+    return last;
+  }
+  d.setDate(d.getDate() - (db.days || 180));
+  return d;
+}
+function gmailDate(d) {
+  return d.getFullYear() + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + String(d.getDate()).padStart(2, '0');
+}
+function buildPrompt() {
+  const since = gmailDate(sinceDate());
+  const known = db.papers.filter(p => p.status === 'invited' || p.status === 'accepted').map(p => p.manuscriptId);
+  return [
+    'Use o conector do Gmail para levantar meus convites e tarefas de revisão de artigos (peer review, eu como revisor).',
+    '',
+    'Busca no Gmail (ajuste se precisar e pagine até o fim):',
+    '(from:' + SENDERS.join(' OR from:') + ' OR subject:("invitation to review" OR "review for" OR reviewer)) after:' + since,
+    '',
+    'Abra cada e-mail relevante (get_thread) para pegar ID, título e prazos.',
+    'Considere: convites ("Invitation to review"), aceites ("agreed to review", "now in your Reviewer Centre", "next steps"), lembretes ("Reminder", "due soon", "Due Today", "Overdue"), confirmações de revisão enviada ("Thank you for your review", "Reviewer update") e convites recusados, cancelados ou expirados.',
+    'Ignore e-mails em que eu sou AUTOR (decisões editoriais, "received a decision", pedidos de revisão do meu próprio artigo).',
+    known.length ? 'Já tenho cadastrados como pendentes: ' + known.join(', ') + '. Informe também se algum deles mudou de status ou de prazo.' : '',
+    '',
+    'Agrupe por ID do manuscrito (ex.: TPRS-2026-IJPR-3695, TFS-D-26-08256). Versões .R1, .R2 são manuscritos distintos.',
+    'Status: "invited" = convidado e ainda sem resposta; "accepted" = aceitei e não enviei; "submitted" = revisão enviada; "declined" = recusei, cancelado ou expirado. Use o e-mail mais recente de cada manuscrito.',
+    '',
+    'Responda SOMENTE com um bloco de código JSON, sem texto antes ou depois, neste formato:',
+    '```json',
+    '{"papers":[{"manuscriptId":"","title":"","journal":"","status":"invited","invitedDate":"YYYY-MM-DD","respondBy":"YYYY-MM-DD ou null","dueDate":"YYYY-MM-DD ou null","lastEmailDate":"YYYY-MM-DD","emailUrl":"viewUrl do e-mail mais recente","notes":"observação curta ou vazio"}]}',
+    '```',
+  ].filter((l, i, a) => !(l === '' && a[i - 1] === '')).join('\n');
+}
+
+// ---------- importação ----------
+function extractJson(text) {
+  text = String(text || '').trim();
+  const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  const candidates = [];
+  if (fence) candidates.push(fence[1]);
+  candidates.push(text);
+  const o1 = text.indexOf('{'), o2 = text.lastIndexOf('}');
+  if (o1 >= 0 && o2 > o1) candidates.push(text.slice(o1, o2 + 1));
+  const a1 = text.indexOf('['), a2 = text.lastIndexOf(']');
+  if (a1 >= 0 && a2 > a1) candidates.push(text.slice(a1, a2 + 1));
+  for (const c of candidates) {
+    try {
+      const v = JSON.parse(c);
+      if (Array.isArray(v)) return { papers: v };
+      if (v && Array.isArray(v.papers)) return v;
+    } catch (e) {}
+  }
+  return null;
+}
+
+function mergePapers(incoming, opts) {
+  const fromClaude = !opts || !opts.backup;
+  let added = 0, updated = 0;
+  for (const raw of incoming) {
+    if (!raw || typeof raw !== 'object') continue;
+    const id = normId(raw.manuscriptId || raw.id);
+    if (!id) continue;
+    const status = STATUS[raw.status] ? raw.status : 'invited';
+    const cur = db.papers.find(p => normId(p.manuscriptId) === id);
+    if (!cur) {
+      db.papers.push({
+        manuscriptId: raw.manuscriptId || id,
+        title: raw.title || '',
+        journal: raw.journal || '',
+        status,
+        invitedDate: isDate(raw.invitedDate) ? raw.invitedDate : null,
+        respondBy: isDate(raw.respondBy) ? raw.respondBy : null,
+        dueDate: isDate(raw.dueDate) ? raw.dueDate : null,
+        lastEmailDate: isDate(raw.lastEmailDate) ? raw.lastEmailDate : null,
+        emailUrl: raw.emailUrl || '',
+        notes: fromClaude ? '' : (raw.notes || ''),
+        claudeNotes: fromClaude ? (raw.notes || '') : (raw.claudeNotes || ''),
+        updatedAt: new Date().toISOString(),
+      });
+      added++;
+      continue;
+    }
+    let changed = false;
+    const set = (k, v) => { if (v && v !== cur[k]) { cur[k] = v; changed = true; } };
+    if (fromClaude) {
+      // Status só avança. O que eu marquei à mão não regride por causa de um e-mail antigo.
+      if (STATUS[status].rank > STATUS[cur.status].rank) set('status', status);
+      set('title', cur.title ? '' : raw.title);
+      set('journal', cur.journal ? '' : raw.journal);
+      if (isDate(raw.dueDate)) set('dueDate', raw.dueDate);
+      if (isDate(raw.respondBy)) set('respondBy', raw.respondBy);
+      if (isDate(raw.invitedDate) && !cur.invitedDate) set('invitedDate', raw.invitedDate);
+      if (isDate(raw.lastEmailDate) && (!cur.lastEmailDate || raw.lastEmailDate >= cur.lastEmailDate)) {
+        set('lastEmailDate', raw.lastEmailDate);
+        set('emailUrl', raw.emailUrl);
+      } else if (!cur.emailUrl) set('emailUrl', raw.emailUrl);
+      set('claudeNotes', raw.notes);
+    } else {
+      for (const k of ['title', 'journal', 'status', 'invitedDate', 'respondBy', 'dueDate', 'lastEmailDate', 'emailUrl', 'notes', 'claudeNotes']) set(k, raw[k]);
+    }
+    if (changed) { cur.updatedAt = new Date().toISOString(); updated++; }
+  }
+  return { added, updated };
+}
+
+function importText(text) {
+  const data = extractJson(text);
+  if (!data) { toast('Não achei JSON válido na resposta'); return false; }
+  const backup = data.app === 'revisoes';
+  const r = mergePapers(data.papers, { backup });
+  if (!backup) db.lastSync = new Date().toISOString();
+  if (backup && data.days) db.days = data.days;
+  save();
+  render();
+  toast(r.added + ' novo(s), ' + r.updated + ' atualizado(s)');
+  return true;
+}
+
+// ---------- render ----------
+function daysUntil(iso) {
+  if (!isDate(iso)) return null;
+  const a = new Date(todayISO() + 'T00:00:00'), b = new Date(iso + 'T00:00:00');
+  return Math.round((b - a) / 86400000);
+}
+function fmtDate(iso) {
+  if (!isDate(iso)) return '';
+  const [y, m, d] = iso.split('-');
+  return d + '/' + m + '/' + y.slice(2);
+}
+function deadlineOf(p) {
+  if (p.status === 'accepted') return p.dueDate;
+  if (p.status === 'invited') return p.respondBy || p.dueDate;
+  return null;
+}
+function dueChip(p) {
+  const dl = deadlineOf(p);
+  const n = daysUntil(dl);
+  if (n === null) return '';
+  const what = p.status === 'invited' ? 'responder' : 'entregar';
+  let cls = 'due-ok', txt;
+  if (n < 0) { cls = 'due-late'; txt = what + ': atrasado ' + (-n) + 'd'; }
+  else if (n === 0) { cls = 'due-late'; txt = what + ' hoje'; }
+  else { if (n <= 7) cls = 'due-soon'; txt = what + ' em ' + n + 'd (' + fmtDate(dl) + ')'; }
+  return '<span class="chip ' + cls + '">' + txt + '</span>';
+}
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function filtered() {
+  const list = db.papers.filter(p => {
+    if (tab === 'all') return true;
+    if (tab === 'active') return p.status === 'invited' || p.status === 'accepted';
+    return p.status === tab;
+  });
+  const key = p => deadlineOf(p) || '9999-12-31';
+  return list.sort((a, b) => key(a).localeCompare(key(b)) || String(b.lastEmailDate || '').localeCompare(String(a.lastEmailDate || '')));
+}
+function render() {
+  const counts = { invited: 0, accepted: 0, late: 0 };
+  for (const p of db.papers) {
+    if (counts[p.status] !== undefined) counts[p.status]++;
+    const n = daysUntil(deadlineOf(p));
+    if (n !== null && n < 0) counts.late++;
+  }
+  $('summary').textContent = counts.accepted + ' revisando · ' + counts.invited + ' convite(s)' +
+    (counts.late ? ' · ' + counts.late + ' atrasado(s)' : '') +
+    (db.lastSync ? ' · sinc. ' + fmtDate(db.lastSync.slice(0, 10)) : '');
+
+  $('tabs').innerHTML = TABS.map(([k, l]) => '<button data-tab="' + k + '" class="' + (k === tab ? 'on' : '') + '">' + l + '</button>').join('');
+
+  const list = filtered();
+  if (!list.length) {
+    $('list').innerHTML = '<div class="empty">' + (db.papers.length
+      ? 'Nada nesta aba.'
+      : 'Nenhum paper ainda.<br><br>Toque em <b>Buscar no e-mail com Claude</b>. O app abre o Claude com o pedido pronto. Depois traga a resposta com <b>Importar</b>.') + '</div>';
+    return;
+  }
+  $('list').innerHTML = list.map(p =>
+    '<div class="card" data-id="' + esc(p.manuscriptId) + '">' +
+      '<div class="top"><span class="journal">' + esc(p.journal || 'Periódico?') + '</span>' +
+      '<span class="chip st-' + p.status + '">' + STATUS[p.status].label + '</span></div>' +
+      '<div class="title">' + esc(p.title || '(sem título)') + '</div>' +
+      '<div class="meta"><span>' + esc(p.manuscriptId) + '</span>' + dueChip(p) + '</div>' +
+    '</div>').join('');
+}
+
+// ---------- sheets ----------
+let openSheet = null;
+function show(id) {
+  hide();
+  $(id).classList.add('open'); $('sheetBg').classList.add('open');
+  openSheet = id;
+}
+function hide() {
+  if (openSheet) $(openSheet).classList.remove('open');
+  $('sheetBg').classList.remove('open');
+  openSheet = null;
+}
+window.onBack = function () { if (openSheet) { hide(); return true; } return false; };
+
+function openEdit(id) {
+  const p = id ? db.papers.find(x => x.manuscriptId === id) : null;
+  editingId = p ? p.manuscriptId : null;
+  $('editTitle').textContent = p ? 'Editar paper' : 'Novo paper';
+  $('fId').value = p ? p.manuscriptId : '';
+  $('fJournal').value = p ? p.journal : '';
+  $('fTitle').value = p ? p.title : '';
+  $('fStatus').value = p ? p.status : 'accepted';
+  $('fDue').value = p && p.dueDate || '';
+  $('fInvited').value = p && p.invitedDate || '';
+  $('fRespond').value = p && p.respondBy || '';
+  $('fNotes').value = p && p.notes || '';
+  $('fClaudeNotes').textContent = p && p.claudeNotes ? 'Claude: ' + p.claudeNotes : '';
+  $('btnEmail').style.display = p && p.emailUrl ? '' : 'none';
+  $('btnDelete').style.display = p ? '' : 'none';
+  show('sheetEdit');
+}
+function saveEdit() {
+  const id = $('fId').value.trim();
+  if (!id) { toast('Informe o ID do manuscrito'); return; }
+  const dup = db.papers.find(x => normId(x.manuscriptId) === normId(id) && x.manuscriptId !== editingId);
+  if (dup) { toast('Já existe um paper com esse ID'); return; }
+  let p = editingId ? db.papers.find(x => x.manuscriptId === editingId) : null;
+  if (!p) { p = { emailUrl: '', claudeNotes: '', lastEmailDate: null }; db.papers.push(p); }
+  Object.assign(p, {
+    manuscriptId: id, journal: $('fJournal').value.trim(), title: $('fTitle').value.trim(),
+    status: $('fStatus').value, dueDate: $('fDue').value || null, invitedDate: $('fInvited').value || null,
+    respondBy: $('fRespond').value || null, notes: $('fNotes').value.trim(), updatedAt: new Date().toISOString(),
+  });
+  save(); hide(); render();
+}
+
+// ---------- ponte Android ----------
+function toast(msg) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2600);
+}
+function copy(text) {
+  if (hasBridge) { Android.copyText(text); return; }
+  navigator.clipboard && navigator.clipboard.writeText(text).then(() => toast('Copiado'));
+}
+function openUrl(url) {
+  if (hasBridge) Android.openUrl(url); else window.open(url, '_blank');
+}
+window.onSharedText = function (text) {
+  $('importText').value = text;
+  show('sheetImport');
+  importText(text) && hide();
+};
+
+// ---------- eventos ----------
+$('btnClaude').onclick = () => {
+  const prompt = buildPrompt();
+  if (!hasBridge) { copy(prompt); return; }
+  const r = Android.openClaude(prompt);
+  if (r === 'not_installed') toast('Instale o app do Claude e ative o conector do Gmail');
+  else if (r === 'failed') toast('Prompt copiado. Abra o Claude e cole.');
+};
+$('btnImport').onclick = () => { $('importText').value = ''; show('sheetImport'); };
+$('btnPaste').onclick = async () => {
+  let t = '';
+  if (hasBridge) t = Android.readClipboard();
+  else if (navigator.clipboard) { try { t = await navigator.clipboard.readText(); } catch (e) {} }
+  if (t) $('importText').value = t; else toast('Área de transferência vazia. Segure no campo e cole.');
+};
+$('btnDoImport').onclick = () => { if (importText($('importText').value)) hide(); };
+$('btnAdd').onclick = () => openEdit(null);
+$('btnSave').onclick = saveEdit;
+$('btnDelete').onclick = () => {
+  if (!confirm('Excluir este paper?')) return;
+  db.papers = db.papers.filter(x => x.manuscriptId !== editingId);
+  save(); hide(); render();
+};
+$('btnEmail').onclick = () => {
+  const p = db.papers.find(x => x.manuscriptId === editingId);
+  if (p && p.emailUrl) openUrl(p.emailUrl);
+};
+$('btnMenu').onclick = () => {
+  $('optDays').value = db.days || 180;
+  $('lastSyncInfo').textContent = db.lastSync
+    ? 'Última importação em ' + fmtDate(db.lastSync.slice(0, 10)) + '. A próxima busca começa em ' + gmailDate(sinceDate()) + '.'
+    : 'Ainda sem importação. A primeira busca cobre os últimos ' + (db.days || 180) + ' dias.';
+  show('sheetMenu');
+};
+$('optDays').onchange = () => {
+  const n = parseInt($('optDays').value, 10);
+  if (n >= 7 && n <= 730) { db.days = n; save(); }
+};
+$('btnCopyPrompt').onclick = () => copy(buildPrompt());
+$('btnResetSync').onclick = () => { db.lastSync = null; save(); render(); hide(); toast('Próxima busca cobre os últimos ' + db.days + ' dias'); };
+$('btnExport').onclick = () => {
+  const text = JSON.stringify({ app: 'revisoes', exportedAt: new Date().toISOString(), days: db.days, papers: db.papers }, null, 1);
+  if (hasBridge) Android.shareText(text, 'Backup Revisões'); else copy(text);
+};
+$('btnCalendar').onclick = () => {
+  const lines = filtered().filter(p => deadlineOf(p)).map(p =>
+    fmtDate(deadlineOf(p)) + '  ' + (p.status === 'invited' ? '[responder] ' : '[entregar] ') + p.manuscriptId + ' (' + (p.journal || '') + ')');
+  const text = lines.length ? 'Prazos de revisão\n' + lines.join('\n') : 'Sem prazos pendentes.';
+  if (hasBridge) Android.shareText(text, 'Prazos de revisão'); else copy(text);
+};
+$('sheetBg').onclick = hide;
+$('tabs').onclick = e => { const t = e.target.dataset && e.target.dataset.tab; if (t) { tab = t; render(); } };
+$('list').onclick = e => { const c = e.target.closest('.card'); if (c) openEdit(c.dataset.id); };
+
+render();
+</script>
+</body>
+</html>

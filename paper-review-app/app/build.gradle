@@ -1,0 +1,42 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'br.usp.callefi.revisoes'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'br.usp.callefi.revisoes'
+        minSdk 26
+        targetSdk 35
+        versionCode Integer.parseInt(System.getenv('VERSION_CODE') ?: '1')
+        versionName '1.0.' + (System.getenv('VERSION_CODE') ?: '0')
+    }
+
+    // Chave fixa no repo para que cada APK novo instale por cima do anterior
+    // sem apagar os dados. App de uso pessoal, distribuído por sideload.
+    signingConfigs {
+        release {
+            storeFile file('revisoes.keystore')
+            storePassword 'revisoes123'
+            keyAlias 'revisoes'
+            keyPassword 'revisoes123'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+        debug {
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

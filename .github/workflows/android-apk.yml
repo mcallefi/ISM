@@ -1,0 +1,56 @@
+name: APK Revisões
+
+on:
+  push:
+    paths:
+      - 'paper-review-app/**'
+      - '.github/workflows/android-apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: paper-review-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14.3'
+
+      - name: Build APK
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+        run: gradle --no-daemon assembleRelease
+
+      - name: Rename APK
+        run: cp app/build/outputs/apk/release/app-release.apk ../Revisoes.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Revisoes-apk
+          path: Revisoes.apk
+
+      - name: Publish release "apk-latest"
+        env:
+          GH_TOKEN: ${{ github.token }}
+        working-directory: .
+        run: |
+          gh release delete apk-latest --yes --cleanup-tag || true
+          gh release create apk-latest Revisoes.apk \
+            --target "$GITHUB_SHA" \
+            --title "Revisões (build ${{ github.run_number }})" \
+            --notes "APK gerado do commit $GITHUB_SHA no branch ${GITHUB_REF_NAME}. Baixe Revisoes.apk no celular e instale." \
+            --prerelease
